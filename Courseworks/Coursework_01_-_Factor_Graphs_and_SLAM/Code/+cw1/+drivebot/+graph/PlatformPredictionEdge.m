@@ -60,10 +60,25 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   an estimate of the platform at time x_(k) and the control
             %   input u_(k+1)
 
-            warning('PlatformPredictionEdge.initialEstimate: implement')
+            % First Vertex Estimate
+            priorX = obj.edgeVertices{1}.estimate();
+
+            c = cos(priorX(3));
+            s = sin(priorX(3));
+
+            %M Matrix
+            M = obj.dT * [c -s 0;
+            s c 0;
+            0 0 1];
+
+            % Second Vertex Propogation
+            predictedX = priorX + M * obj.z;
+
+            %Normalize Theta
+            predictedX(3) = g2o.stuff.normalize_theta(predictedX(3));
 
             % Compute the posterior assming no noise
-            obj.edgeVertices{2}.x = zeros(3, 1);
+            obj.edgeVertices{2}.setEstimate(predictedX);
         end
         
         function computeError(obj)
@@ -79,9 +94,24 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   equation has to be rearranged to make the error the subject
             %   of the formulat
                        
-            warning('PlatformPredictionEdge.computeError: implement')
+            %Error is v or noise
+            % e = inv(M) ((x k+1 - xk)) - u
+            %Inverse of a rotation matrix is just the transpose
 
-            obj.errorZ = 0;
+            xk = obj.edgeVertices{1}.x;
+            xk_1 = obj.edgeVertices{2}.x;
+
+            c = cos(xk(3));
+            s = sin(xk(3));
+
+            M_inverse = (1/obj.dT) * [c s 0;
+            -s c 0;
+            0 0 1];
+
+            % Error is M(difference of x) - u
+            obj.errorZ = M_inverse * (xk_1 - xk) - obj.z;
+
+            obj.errorZ(3) = g2o.stuff.normalize_theta(obj.errorZ(3));
         end
         
         % Compute the Jacobians
@@ -97,11 +127,38 @@ classdef PlatformPredictionEdge < g2o.core.BaseBinaryEdge
             %   respect to both of them must be computed.
             %
 
-            warning('PlatformPredictionEdge.linearizeOplus: implement')
+            xk = obj.edgeVertices{1}.x;
+            xk_1 = obj.edgeVertices{2}.x;
 
-            obj.J{1} = -eye(3);
+            % delta x
+            dx = xk_1 - xk;
 
-            obj.J{2} = eye(3);
+            ck = cos(xk(3));
+            sk = sin(xk(3));
+            
+            % 
+            obj.J{1} = zeros(3);
+
+            obj.J{1}(1, 1) = -ck;
+            obj.J{1}(2, 1) = sk;
+
+            obj.J{1}(1, 2) = -sk;
+            obj.J{1}(2, 2) = -ck;
+
+            obj.J{1}(1, 3) = (-sk*dx(1) + ck*dx(2));
+            obj.J{1}(2, 3) = (-ck*dx(1) -sk*dx(2));
+
+            obj.J{1}(3, 3) = -1;
+
+            obj.J{1} = obj.J{1} / obj.dT;
+
+
+
+            M_inverse = (1/obj.dT) * [ck sk 0;
+            -sk ck 0;
+            0 0 1];
+
+            obj.J{2} = M_inverse;
         end
     end    
 end
