@@ -10,15 +10,15 @@ Edges in the graph connect variable nodes to the factor nodes which they depend 
 
 The only variable node in this problem is the vehicle pose vertex; which is given by equation 1 of appendix A.2
 
-$$x_k = \begin{pmatrix}x_k \\ y_k \\ \psi_k \end{pmatrix}\qquad \qquad (1)$$
+$$x_k = \begin{pmatrix}x_k \\\ y_k \\\ \psi_k \end{pmatrix}\qquad \qquad (1)$$
 
 In this equation $x_k$ and $y_k$ are the position coordinates in the world-fixed frame and $\psi_k$ is the bearing of the vehicle.
 
 ## Addition Operator
 
-Addition operators define how variable nodes are updated during optimisation - taking a perturbation: $\delta = [\delta_x, \delta_y, \delta_{\psi}]^T$ to update the state estimate during optimisation:
+Addition operators define how variable nodes are updated - taking a perturbation: $\delta = [\delta_x, \delta_y, \delta_{\psi}]^T$ to update the state estimate during optimisation:
 
-$$x_k \oplus \delta = \begin{pmatrix} x_k + \delta_x \\ y_k + \delta_y \\ (\psi_k + \delta_\psi) \bmod 2\pi \end{pmatrix}$$
+$$x_k \oplus \delta = \begin{bmatrix} x_k + \delta_x \\\ y_k + \delta_y \\\ (\psi_k + \delta_\psi) \bmod 2\pi \end{bmatrix}$$
 
 Position components $x_k$ and $y_k$ use standard addition operation and live in $\mathbb{R}^2$. The bearing lives in $S^1$ due to its different addition operator. The state space is therefore $\mathbb{R}^2 \times S^1$. Noting that the bearing addition operator is different because bearing is a value between 0 and $2\pi$ whereby after exceeding $2\pi$ it returns to $0$ rather than being continuous like the $x_k$ and $y_k$ operators.
 
@@ -31,21 +31,21 @@ The prior factor is an anchor for the initial pose to prevent the graph being un
 | Property        | Description                                                                         |
 | --------------- | ----------------------------------------------------------------------------------- |
 | **Type**        | Unary                                                                               |
-| **Connects to** | $\mathbf{x}_0$                                                                      |
-| **Equation**    | $\mathbf{x}_0 \sim \mathcal{N}(\boldsymbol{\mu}_0, \boldsymbol{\Sigma}_0)$          |
+| **Connects to** | $x_0$                                                                      |
+| **Equation**    | $x_0 \sim \mathcal{N}(\boldsymbol{\mu}_0, \boldsymbol{\Sigma}_0)$          |
 | **Measurement** | Initial state estimate $\boldsymbol{\mu}_0$ with covariance $\boldsymbol{\Sigma}_0$ |
-| **Residual**    | $\mathbf{e}_{\text{prior}} = \mathbf{x}_0 \ominus \boldsymbol{\mu}_0$               |
+| **Residual**    | $e_{\text{prior}} = x_0 \ominus \boldsymbol{\mu}_0$               |
 
 ### Process Factor (Binary)
 
 | Property        | Description                                                                                                    |
 | --------------- | -------------------------------------------------------------------------------------------------------------- |
 | **Type**        | Binary                                                                                                         |
-| **Connects to** | $\mathbf{x}_k$ and $\mathbf{x}_{k+1}$                                                                          |
-| **Equation**    | Eq. 3 & 4 (A.2): $\mathbf{x}_{k+1} = \mathbf{x}_k + \mathbf{M}(\psi_k)\,(\mathbf{u}_{k+1} + \mathbf{v}_{k+1})$ |
-| **Measurement** | Odometry input $\mathbf{u}_{k+1} = [s_k,\; 0,\; \dot{\psi}_k]^\top$                                            |
-| **Residual**    | $\mathbf{e}_{\text{proc}} = \mathbf{x}_{k+1} \ominus [\mathbf{x}_k + \mathbf{M}(\psi_k)\,\mathbf{u}_{k+1}]$    |
-| **Noise**       | $\mathbf{v}_{k+1} \sim \mathcal{N}(\mathbf{0}, \mathbf{Q}_k)$, diagonal                                        |
+| **Connects to** | $x_k$ and $x_{k+1}$                                                                          |
+| **Equation**    | Eq. 3 & 4 (A.2): $x_{k+1} = x_k + M(\psi_k)\,(u_{k+1} + v_{k+1})$ |
+| **Measurement** | Odometry input $u_{k+1} = [s_k, 0, \dot{\psi}_k]^\top$                                            |
+| **Residual**    | $e_{\text{proc}} = x_{k+1} \ominus [x_k + M(\psi_k)\,u_{k+1}]$    |
+| **Noise**       | $v_{k+1} \sim \mathcal{N}(0, Q_k)$, diagonal                                        |
 
 This factor is non-linear due to M depending on $\psi_k$ (Eq. 4), requiring iterative linearisation.
 
@@ -55,10 +55,10 @@ This factor is non-linear due to M depending on $\psi_k$ (Eq. 4), requiring iter
 | --------------- | ----------------------------------------------------------------------------------- |
 | **Type**        | Unary                                                                               |
 | **Connects to** | $\mathbf{x}_{k+1}$                                                                  |
-| **Equation**    | A.3: $\mathbf{z}_{k+1}^G = [x_{k+1},\; y_{k+1}]^\top + \mathbf{w}_{k+1}^G$        |
-| **Measurement** | GPS position fix $\mathbf{z}_{k+1}^G \in \mathbb{R}^2$                              |
-| **Residual**    | $\mathbf{e}_{\text{GPS}} = \mathbf{z}_{k+1}^G - [x_{k+1},\; y_{k+1}]^\top$         |
-| **Noise**       | $\mathbf{w}_{k+1}^G \sim \mathcal{N}(\mathbf{0}, \mathbf{R}^G)$, diagonal, constant |
+| **Equation**    | A.3: $z_{k+1}^G = [x_{k+1}, y_{k+1}]^\top + w_{k+1}^G$        |
+| **Measurement** | GPS position fix $z_{k+1}^G \in \mathbb{R}^2$                              |
+| **Residual**    | $e_{\text{GPS}} = z_{k+1}^G - [x_{k+1}, y_{k+1}]^\top$         |
+| **Noise**       | $w_{k+1}^G \sim \mathcal{N}(0, R^G)$, diagonal, constant |
 
 This factor is linear — it directly observes position, not heading.
 
