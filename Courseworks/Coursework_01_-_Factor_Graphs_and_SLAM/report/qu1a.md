@@ -64,12 +64,13 @@ This factor is linear — it directly observes position, not heading.
 
 ## Factor Graph Diagram
 
-![Factor Graph Diagram](factor_graph_q1a.png)
+![Factor Graph Diagram](factor_graph_q1a.jpg)
 
 **Legend:**
 - **(X_k)** — Variable nodes (circles): vehicle pose at timestep $k$
 - **[P]** — Prior factor (square): unary prior on initial pose $\mathbf{x}_0$
 - **[F_k]** — Process factors (squares): binary odometry factors encoding Eq. 3 & 4 (A.2)
 - **[G_k]** — GPS factors (squares): unary GPS measurement factors (A.3)
+- **[Z_k]** — GPS Measurements (circles): Measurements that are used by the GPS factors during optimisation. The circles are shaded to represent that they themselves are not optimised. 
 
 The process factors form a Markov chain. The GPS factors provide position corrections. Together they are complementary: without GPS the trajectory drifts; without process factors the heading is unobservable.
