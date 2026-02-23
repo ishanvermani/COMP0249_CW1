@@ -16,6 +16,7 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             beta = obj.z(2);
 
             ang = theta + beta;
+            g2o.stuff.normalize_theta(ang);
             lx = px + r * cos(ang);
             ly = py + r * sin(ang);
 
@@ -36,7 +37,7 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             beta_pred = atan2(dy, dx) - theta;
 
             obj.errorZ(1) = obj.z(1) - r_pred;
-            obj.errorZ(2) = obj.wrapToPi(obj.z(2) - beta_pred);
+            obj.errorZ(2) = g2o.stuff.normalize_theta(obj.z(2) - beta_pred);
         end
 
         function linearizeOplus(obj)
@@ -69,10 +70,5 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
         end
     end
 
-    methods(Static, Access = private)
-        function a = wrapToPi(a)
-            
-            a = atan2(sin(a), cos(a));
-        end
-    end
+    
 end
