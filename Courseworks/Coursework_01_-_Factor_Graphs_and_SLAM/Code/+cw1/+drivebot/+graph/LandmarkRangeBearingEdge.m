@@ -16,7 +16,7 @@ classdef LandmarkRangeBearingEdge < g2o.core.BaseBinaryEdge
             beta = obj.z(2);
 
             ang = theta + beta;
-            g2o.stuff.normalize_theta(ang);
+            ang = g2o.stuff.normalize_theta(ang);
             lx = px + r * cos(ang);
             ly = py + r * sin(ang);
 
